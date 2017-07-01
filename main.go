@@ -46,26 +46,8 @@ func main() {
 	}
 
 	server.On("connection", func(socket socketio.Socket) {
+
 		log.Println("on connection to socket", socket.Id())
-		// socket.Join(room)
-		// testUser := User{
-		// 	Name:   "Max",
-		// 	ID:     "1234",
-		// 	Socket: "12edad23rr232345",
-		// }
-
-		// testMessage := Message{
-		// 	User:      testUser,
-		// 	Sender:    "system",
-		// 	CreatedAt: time.Now().Local(),
-		// 	Text:      "joined room",
-		// 	Room:      room,
-		// }
-
-		// testMessage.MarshalJSON()
-		// testMessage = json.Marshal(testMessage)
-
-		// server.BroadcastTo(room, "join", testMessage)
 
 		socket.On("add:user", func(data string) {
 			var newUser = User{}
@@ -129,6 +111,7 @@ func main() {
 			if err := json.Unmarshal(bytes, pointer); err != nil {
 				log.Fatal(err)
 			}
+			pointer.CreatedAt = time.Now().Local()
 			log.Println("new message", parsedData)
 			messages[parsedData.Room] = append(messages[parsedData.Room], parsedData)
 			log.Println("added message", parsedData)
