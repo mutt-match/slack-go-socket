@@ -38,7 +38,6 @@ func main() {
 
 	var participants = []User{}
 	messages := make(map[string][]Message)
-	// var nameCounter = 1
 
 	server, err := socketio.NewServer(nil)
 	if err != nil {
@@ -56,12 +55,10 @@ func main() {
 			if err := json.Unmarshal(bytes, pointer); err != nil {
 				log.Fatal(err)
 			}
-
 			pointer.Socket = socket.Id()
 
 			participants = append(participants, newUser)
 
-			log.Println("participants", participants)
 			newMessage := Message{
 				User:         newUser,
 				RoomMessages: messages[newUser.Room],
@@ -80,11 +77,10 @@ func main() {
 		})
 
 		socket.On("join", func(data string) {
-
-			log.Println("join", data)
 			var parsedData = Message{}
 			pointer := &parsedData
 			bytes := []byte(data)
+
 			if err := json.Unmarshal(bytes, pointer); err != nil {
 				log.Fatal(err)
 			}
@@ -92,37 +88,33 @@ func main() {
 			if _, new := messages[parsedData.Room]; !new {
 				messages[parsedData.Room] = []Message{}
 			}
+
 			var newMessage = Message{
 				User:         parsedData.User,
 				Room:         parsedData.Room,
 				RoomMessages: messages[parsedData.Room],
 			}
-			log.Println("join room", parsedData.Room)
+
 			socket.Join(parsedData.Room)
 			server.BroadcastTo(parsedData.Room, "new:message", newMessage)
 		})
 
 		socket.On("add:message", func(data string) {
-
-			log.Println("join", data)
 			var parsedData = Message{}
 			pointer := &parsedData
+			pointer.CreatedAt = time.Now().Local()
 			bytes := []byte(data)
+
 			if err := json.Unmarshal(bytes, pointer); err != nil {
 				log.Fatal(err)
 			}
-			pointer.CreatedAt = time.Now().Local()
-			log.Println("new message", parsedData)
+
 			messages[parsedData.Room] = append(messages[parsedData.Room], parsedData)
-			log.Println("added message", parsedData)
 			server.BroadcastTo(parsedData.Room, "new:message", parsedData)
 		})
 
 		socket.On("disconnection", func() {
-			//remove participant
-			log.Println("on disconnect")
 			for idx := range participants {
-				log.Println("index", idx)
 				if socket.Id() == participants[idx].Socket {
 					participants = remove(participants, idx)
 					break
@@ -131,10 +123,6 @@ func main() {
 			user := User{Socket: socket.Id()}
 			server.BroadcastTo("Lobby", "disconnect:user", user)
 		})
-	})
-
-	server.On("disconnect:user", func(socket socketio.Socket, err error) {
-		log.Println("disconnet:")
 	})
 
 	server.On("error", func(socket socketio.Socket, err error) {
